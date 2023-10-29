@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -34,6 +35,9 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.Volley
 import com.stevenjamesmead.cis4034madhorseyappviewmodel.ui.theme.CIS4034MADHorseyAppViewModelTheme
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 val TAG = "MainActivity"
 
@@ -54,96 +58,53 @@ class MainActivity : ComponentActivity() {
     // Volley RequeueQueue object that will be used to send out requests.
     // Note the use of 'lateinit'.  This can't be given a value until
     // Android is up and running and the onCreate method is called.
-    private lateinit var requestQueue: RequestQueue
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
 
-        // Now we are able to set the requestQueue
-        requestQueue = Volley.newRequestQueue(applicationContext)
-
         setContent {
             CIS4034MADHorseyAppViewModelTheme {
-                val context = LocalContext.current
-                var horseImages = remember { mutableStateListOf<HorseImage>() }
-
-                fetchHorseList(
-                    context,
-                    requestQueue,
-                    TAG,
-                    "${MainActivity.BASE_URL}/horse_images.txt"
-                ) {
-                    it.forEach {
-                        horseInfo ->
-
-                        if(horseInfo.isNotEmpty()) {
-                            val (fileName, description) = horseInfo.split(",")
-
-                            Log.d(TAG, fileName + " --- " + description)
-                            fetchImage(
-                                context,
-                                requestQueue,
-                                TAG,
-                                "${MainActivity.BASE_URL}/$fileName"
-                            ) {
-                                bitmap ->
-                                Log.d(TAG, "Loaded image")
-                                horseImages.add(HorseImage(fileName, description, bitmap.asImageBitmap()))
-                            }
-                        }
-                    }
-                }
 
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+                    val viewModel: HorseyViewModel = viewModel(factory = HorseyViewModel.Factory)
+
                     AppScreen(
-                        horseImages,
-                        {
-                            //
-                            // Force an update on the list that will instigate recomposition
-                            //
-                            val index = horseImages.indexOf(it)
-                            horseImages[index] = horseImages[index].copy(liked = !it.liked)
-                        }
+                        viewModel,
+                        {}
                     )
                 }
             }
         }
-    }
-
-    // onPause will cancel any pending Volley requests
-    override fun onPause() {
-        super.onPause()
-
-        requestQueue.cancelAll(TAG)
-    }
-
-    companion object {
-        val BASE_URL = "https://scedt-intranet.tees.ac.uk/users/u0012604/CIS4034-N/horse_images"
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppScreen(
-    horseImages: List<HorseImage>,
+    viewModel: HorseyViewModel,
     onLike: (it: HorseImage) -> Unit) {
 
+    val context = LocalContext.current
+
     Column(modifier = Modifier.fillMaxSize()) {
-        if(horseImages.isNotEmpty()) {
-            horseImages.forEach {
+        if(viewModel.uiState.value.isNotEmpty()) {
+            viewModel.uiState.value.forEach {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(5.dp)
                     ) {
                     Row(modifier = Modifier.fillMaxWidth()) {
+                        var image = it?.image ?: BitmapFactory.decodeResource(context.resources, R.drawable.horse_png_from_pngfre_6_scaled).asImageBitmap()
+
                         Image(
-                            it.image,
+                            image,
                             contentDescription = it.description,
                             modifier = Modifier.fillMaxWidth(0.45f)
                         )
@@ -187,19 +148,19 @@ fun LikeButton(
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun AppScreenPreview() {
-    val context = LocalContext.current
-
-    var horseImages = remember { mutableStateListOf<HorseImage>() }
-
-    horseImages.addAll(listOfPreviewHorses(context))
-
-    CIS4034MADHorseyAppViewModelTheme {
-        AppScreen(horseImages, onLike = {})
-    }
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun AppScreenPreview() {
+//    val context = LocalContext.current
+//
+//    var horseImages = remember { mutableStateListOf<HorseImage>() }
+//
+//    horseImages.addAll(listOfPreviewHorses(context))
+//
+//    CIS4034MADHorseyAppViewModelTheme {
+//        AppScreen(horseImages, onLike = {})
+//    }
+//}
 
 private fun listOfPreviewHorses(context: Context): List<HorseImage> {
     // Horse image from heres:

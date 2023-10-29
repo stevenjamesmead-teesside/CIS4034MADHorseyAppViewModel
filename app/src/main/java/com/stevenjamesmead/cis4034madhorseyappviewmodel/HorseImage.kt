@@ -5,6 +5,6 @@ import androidx.compose.ui.graphics.ImageBitmap
 data class HorseImage(
     val filename: String,
     val description: String,
-    val image: ImageBitmap,
+    var image: ImageBitmap?,
     var liked: Boolean = false
 )

@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.INTERNET"/>
     <application
+        android:name=".MyApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -12,7 +13,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.CIS4034MADHorseyAppViewModelTheme"
         tools:targetApi="31">
-        <meta-data android:name="authz" android:value="!! AUTH CREDENTIALS HERE !!" />
+        <meta-data android:name="authz" android:value="dTAwMTI2MDQ6SmluZ2xlSmluZ2xlNDIzMQ==" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
